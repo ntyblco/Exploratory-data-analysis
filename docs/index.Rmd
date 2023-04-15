@@ -1,0 +1,231 @@
+---
+title: "Evidencia 1"
+author: "Natalia Blanco A01720531"
+date: "2023-03-14"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: FALSE
+    toc_float:
+      smooth_scroll: FALSE
+      collapsed: FALSE
+---
+
+<style>
+#TOC {
+  color: #708090
+  font-family: Calibri;
+  font-size: 16px;
+  border-color: #708090;
+}
+body {
+  color: #708090;
+  font-family: Calibri; 
+  background-color: #F5F5F5;
+}
+pre {
+  color: #708090;
+  background-color: #F8F8FF;
+}
+#header{
+  color: darkcyan;
+  background-color: aliceblue;
+  opacity: 0.8;
+  font-family: Calibri;
+  font-size: 20px;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introducción  
+
+El departamento de servicio social del tecnológico de monterrey llego a la conclusión que se esta enfrentando a una problemática relacionada a la recolección y al análisis de datos ya que sus datos se encuentran en bases de datos complejas y la mayor parte de la recolección de estos es manual lo cual es tedioso para el departamento así como esto deja la puerta abierta  ala posibilidad de cometer errores de recolección entre otras cosas. El departamento también quisiera poder visualizar sus datos y encontrar métricas las cuales utilizaran para tomar mejores decisiones al momento de contactar socio formadores y elegir experiencias de servicio para los alumnos del tec. 
+
+Con el análisis exploratorio de los datos se busca encontrar tendencias y relaciones en los datos lo que nos permite entender su comportamiento para posteriormente elaborar métricas y predicciones utilizadas para la toma de decisiones. 
+
+Al llevar a cabo el análisis exploratorio el socio formador podrá entender sus datos y el comportamiento de estos y posteriormente con base a la información recolectada podrá tomar decisiones relevantes las cuales beneficiaran sus procesos. 
+
+
+# Análisis Exploratorio de los Datos - EDA
+
+Cargar librerias 
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+library(arsenal)
+library(ggplot2)
+library(foreign)
+library(dplyr)        
+library(forcats)      
+library(ggplot2)       
+library(janitor)      
+library(Hmisc)        
+library(psych)
+library(data.table)
+library(viridis)
+library(kableExtra)
+library(tidyverse)
+library(gt)
+library(corrplot)
+library(naniar)       
+library(dlookr)       
+library(jtools)       
+library(lmtest)        
+library(car)          
+library(olsrr)        
+```
+
+Cargar datos
+```{r echo=TRUE, message=TRUE, warning=FALSE}
+setwd("C:/Users/ntybl/OneDrive/Documents/Semestre 8/Datos")
+getwd()
+df=read.csv("evidence.data.f.csv")
+```
+
+Summary para visualizar los datos.
+```{r}
+summary(df)
+```
+
+Convertir los a variables numéricas y factores para poder llevar a cabo el análisis exploratorio. 
+```{r}
+dtf <- df
+dtf$Carrera <- as.factor(df$Carrera)
+#dtf$Escuela <- as.factor(df$Carrera)
+dtf$Semestre<- as.factor(df$Semestre)
+dtf$OSF <- as.factor(df$OSF)
+dtf$No..plazas <- as.numeric(df$No..plazas)
+dtf$Duración <- as.numeric(df$Duración)
+dtf$Escuela <- as.factor(dtf$Escuela)
+dtf$Categoria.de.proyecto <- as.factor(dtf$Categoria.de.proyecto)
+dtf$Index <- as.numeric(df$Index)
+dtf$Lista.de.espera <- as.factor(df$Lista.de.espera)
+
+```
+
+Visualizar los cambios 
+```{r}
+summary(dtf)
+```
+
+
+Tabulación de estadísticos descriptivos
+
+
+```{r message=FALSE, warning=FALSE, results="asis"}
+require(knitr)
+
+require(survival)
+dfstat <- dtf %>% filter(Escuela %in% c('Ambiente Construido', 'Derecho, economia y relaciones internacionales', 'Estudios creativos', 'Ingeneria y ciencias', 'Negocios', 'Salud'))
+summary_tab2 <- tableby(Escuela ~ No..plazas + Duración, data = dtf, test = FALSE)
+summary(summary_tab2, title = "Summary estadistico de escuela", width = 45)
+
+
+
+```
+
+El promedio representa el valor medio de un conjunto de datos y nos permite entender el valor típico de una variable en una base de datos.
+
+-	Numero de plazas 
+
+En el ejemplo anterior podemos ver que el promedio por escuela varia mucho teniendo el mayor valor en salud con 66. 8 y el valor menor en derecho con 20.2 esto indica que nuestros datos por escuela varían y no se tiene una cantidad igual o proporcional a lo largo de las escuelas. 
+
+La desviación estándar mide cuánto varían los puntos de datos individuales de la media. Una desviación estándar alta significa que los puntos de datos están más dispersos. En este caso en el total de desviación estándar tenemos 46.109 contra un promedio de 36.631 esto nos indica que en la base de datos estas variables tienen un alto grado de variabilidad o dispersión alrededor del promedio. 
+
+El rango indica la diferencia entre el valor máximo y el valor mínimo de una base de datos en este caso podemos observar una amplia diferencia. 
+
+-	Duración 
+
+En el total del promedio de duración vs la desviación estándar en duración nos indica que el conjunto de datos tiene un grado de variabilidad o dispersión de moderado a alto alrededor de la media. 
+
+
+ 
+ 
+#Gráficos de visualización
+
+
+Duracion de proyecto por escuela y tipo de proyecto 
+```{r}
+df_tb1 <- dtf %>% select(Escuela, Categoria.de.proyecto, Duración,No..plazas ) %>% group_by(Escuela) 
+
+ggplot(df_tb1, aes(x= Escuela, y= Duración, fill = Categoria.de.proyecto)) + geom_bar(stat = "identity") + facet_grid(~Duración) + scale_fill_brewer(palette = "Set1") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+La visualización anterior nos permite observar la cantidad de inscritos en cada tipo de proyecto por la duración y la escuela podemos notar que muy pocos alumnos se inscriben en las oportunidades de 60 horas así mismo podemos notar que la mayoría de los alumnos se inscriben en el área de educación. Podemos notar que no hay alumnos de economía inscritos en el área de crecimiento económico o alumnos de ciencias sociales en el área de legalidad lo cual desde una perspectiva analítica no es congruente ya que se esperaría que las ares tuvieran congruencia con la escuela. 
+
+
+Lista de espera por semestre y OSF 
+```{r}
+df_tb3 <- dtf %>% select(OSF, Escuela, Lista.de.espera, Duración) %>% group_by(Duración)
+
+ggplot(df_tb3, aes(Escuela, OSF)) + geom_raster(aes(fill = Lista.de.espera), interpolate = TRUE) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+En el grafico anterior podemos notar que hay 3 concentraciones de lista de espera una en los alumnos de ingeniería y ciencias inscritos en AMMAC , Best budies y Cambiando México. La siguiente concentración de lista de espera se encuentra en los alumnos de negocios inscritos en CVA y por último la tercera concentración de lista de espera se encuentra en los alumnos de Derecho inscritos en Liderazgo y cultura.
+
+
+Cantidad de inscritos en la osf por semestre 
+```{r}
+df_tb4 <- dtf %>% select(Escuela, OSF, Semestre, Duración, Lista.de.espera, Categoria.de.proyecto, Index) 
+
+ggplot(data= df_tb4, aes(x=OSF, y= Index, group = Semestre, colour = Semestre))+ geom_point() + theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+
+
+```
+
+Este grafico nos permite visualizar la cantidad de alumnos inscritos por semestre y podemos observar que la gran mayoría de los alumnos inscritos son de segundo semestre 
+
+Lista de espera por duracion y semestre 
+```{r}
+df_tb5 <- dtf %>% select(Semestre, Lista.de.espera, Duración)
+
+ggplot(df_tb5, aes(x = Lista.de.espera, y = Duración, fill = Semestre )) + geom_bar(stat = "identity") + facet_grid(~Duración) + scale_fill_brewer(palette = "Set1")
+
+```
+
+El grafico anterior muestra los alumnos en lista de espera por semestre y está dividido en la duración del proyecto, podemos notar que en los de 100 horas esta prácticamente dividido a la mitad y en el de 200 hay menos pero se sigue visualizando una gran cantidad.
+
+Scatter plot Plazas x Index(Inscritos) gruped by Escuela 
+```{r}
+df_tb11 <- dtf %>% select(Index, No..plazas, Escuela, Duración)
+
+ggplot(df_tb11, aes( x=No..plazas, y= Index, color = Escuela)) + geom_point()
+
+
+```
+
+En el plot anterior podemos notar que la mayor parte de alumnos son de negocios y de ingeniería podemos inferir que la mayoría de los proyectos tiene pocas plazas, se pueden identificar outliers en las escuelas de negocios, ingeniería y ambiente construido y derecho. Se puede observar correlación del 0 al 10 pero después del 10 se puede observar dispersión.
+
+
+
+
+Solución 1 
+-	Ya que en los datos se visualiza muy poca participación en las escuelas de salud, derecho, ambiente construido y estudios creativos se sugiere informar a los alumnos de estas escuelas acerca de los requisitos de horas para graduarse. 
+
+
+Solución 2 
+-	Se sugiere involucrar a los alumnos en proyectos que tengan relación con su carrera ya que esto les permitirá tener una mejor experiencia así como poner en practica lo que aprenden en sus carreras para crear un impacto positivo en el mundo. 
+
+
+# Sugerencias
+
+- Se sugiere crear variables mas significativas con el fin de poder tener un análisis más completo y útil, un ejemplo es tener una variable de horas acreditadas por alumno y esta se podría comparar con las horas inscritas para conocer el comportamiento y tendencias con respecto a estas dos variables. 
+
+- Se sugiere agregar datos históricos de periodos de invierno anteriores ya que esto permitirá hacer predicciones en base a tendencias en los datos. Esto le permitirá al socio formador poder tomar decisiones que beneficiaran su oferta. 
+
+- Se sugiere prestar atención a la variable de lista de espera ya que se encontraron muchos alumnos en lista de espera, se podría crear un sistema en el cual el socio formador pueda aprobar directamente a los alumnos si estos se inscribieron por entrevista para que no se queden en lista de espera en el sistema. 
+
+
+# Conclusiones 
+
+Los principales hallazgos considero que son que muchos alumnos se encuentran en lista de espera lo que crea un problema para el alumno y el socio formador se sugiere mitigar esto con el uso de indicadores. En el análisis se puede ver como hay muy pocos alumnos de las escuelas de salud, derecho, ambiente construido y estudios creativos se recomienda informar a los alumnos de estas escuelas acerca de los requisitos de graduación así como involucras socio formadores que se apeguen a los temas que se ven en estas carrera con el fin de atraer más alumnos. 
+
+En conclusión considero que el mayor problema es la falta de datos y de variables significativas para el análisis ya que realmente no se puede hacer mucho con los datos que se tienen actualmente, considero que seria benéfico agregar datos históricos y variables predictivas para que se pueda tener un análisis mas completo con tendencias y predicciones. 
+
+
+
